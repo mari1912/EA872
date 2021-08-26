@@ -2,121 +2,115 @@
 #include <memory>
 
 //Model
-class Bloco {
+class Model {
     private: 
-        float a, v, x, m, f_ext;
+        float x0, v0, dt, massa, k, b;
+        float x_atual;
+        float v_atual;
+        float aceleracao;
     public:
-        Bloco(float a_novo, float v_novo, float x_novo, float m_novo, float f_ext_novo);
-        float get_a();
-        float get_v();
-        float get_x();
-        float get_f_ext();
-        void set_v(float v_novo);
-        void set_x(float x_novo);
-};
-
-float Bloco::get_a() {
-    return a;
-}
-
-float Bloco::get_v() {
-    return v;
-}
-
-float Bloco::get_x() {
-    return x;
-}
-
-float Bloco::get_f_ext() {
-    return f_ext;
-}
-
-void Bloco:: set_v(float v_novo) {
-    v = v_novo;
-}
-
-void Bloco:: set_x(float x_novo) {
-    x = x_novo;
-}
-
-Bloco::Bloco(float a_novo, float v_novo, float x_novo, float m_novo, float f_ext_novo) {
-    a = a_novo;
-    v = v_novo;
-    x = x_novo;
-    m = m_novo;
-    f_ext = f_ext_novo;
-}
-
-class Mola {
-    private:
-        float k, b;
-    public:
-        Mola(float k_novo, float b_novo);  
+        Model(float x0, float v0, float dt, float massa, float k, float b);
+        float get_x_atual();
+        float get_v_atual();
+        float get_aceleracao();
         float get_k();
         float get_b();
+        float get_massa();
+        float get_dt();
+        void set_x_atual(float x_novo);
+        void set_v_atual(float v_novo);
+        void set_aceleracao(float aceleracao_novo);
 };
 
-float Mola::get_k() {
+//Construtor
+Model::Model(float x0, float v0, float dt, float massa, float k, float b) {
+    this->x0 = x0;
+    this->v0 = v0;
+    this->dt = dt;
+    this->massa = massa;
+    this->k = k;
+    this->b = b;
+    x_atual = x0;
+    v_atual = v0;
+    aceleracao = 0;
+}
+
+//Permite acesso aos dados
+float Model::get_x_atual(){
+    return x_atual;
+}
+
+float Model::get_v_atual(){
+    return v_atual;
+}
+
+float Model::get_aceleracao(){
+    return aceleracao;
+}
+
+float Model::get_k(){
     return k;
 }
 
-float Mola::get_b() {
+float Model::get_b(){
     return b;
 }
 
-Mola::Mola(float k_novo, float b_novo) {
-    k = k_novo;
-    b = b_novo;
+float Model::get_massa() {
+    return massa;
+}
+
+float Model::get_dt(){
+    return dt;
+}
+
+//Permite alterar os dados
+void Model::set_x_atual(float x_novo){
+    x_atual = x_novo;
+}
+
+void Model::set_v_atual(float v_novo){
+    v_atual = v_novo;
+}
+
+void Model::set_aceleracao(float aceleracao_novo){
+    aceleracao = aceleracao_novo;
 }
 
 //Controller
-class Sistema {
+class Controller {
     private:
-        float T;
-        Bloco block;
-        Mola mola;
+        std::shared_ptr<Model>model;
+        float forca;
     public:
-        Sistema(Bloco block_novo, Mola mola_novo, float T_novo);
-        void atualiza_velocidade();
-        void atualiza_espaco();
-        float forca_elastica();
-        float forca_amort();
-        float forca_resultante();
+        Controller(std::shared_ptr<Model>model);
+        void calcula_posicao();
 };
 
-void Sistema::atualiza_velocidade() {
-    float temp = block.get_v() + T*block.get_a();
-    block.set_v(temp); 
+//Construtor
+Controller::Controller(std::shared_ptr<Model>model) {
+    this->model = model;
 }
 
-void Sistema::atualiza_espaco() {
-    float temp = block.get_x() + T*block.get_v();
-    block.set_x(temp);
+//Calcula a proxima posicao
+void Controller::calcula_posicao() {
+
+    forca = -(model->get_x_atual())*(model->get_k()) - (model->get_v_atual())*(model->get_b());
+    model->set_aceleracao(forca/(model->get_massa()));
+    model->set_v_atual(model->get_v_atual()+model->get_aceleracao()*model->get_dt());
+    model->set_x_atual(model->get_x_atual()+model->get_v_atual()*model->get_dt());   
 }
 
-float Sistema::forca_resultante() {
-    float forca_elastica = mola.get_k() * block.get_x();
-    float mola.get_b() * block.get_v();
-    return (block.get_f_ext() - forca_amort() - forca_elastica());
-}
-
-Sistema::Sistema(Bloco block_novo, Mola mola_novo, float T_novo) {
-    T = T_novo;
-    block = block_novo;
-    mola = mola_novo;
-}
-
+//Main
 int main() {
-    float x;
-    std::shared_ptr<Bloco> bloco (new Bloco(-2.0, 0, 0, 5.0, 0));
-    std::shared_ptr<Mola> mola (new Mola(2, 0.5));
-    std::shared_ptr<Sistema> sis (new Sistema(bloco, mola, 0.01));
+
+    std::shared_ptr<Model>modelo(new Model(1, 0, 0.1, 1, 1, 0));
+    std::shared_ptr<Controller>controle_sistema(new Controller(modelo));
     
-    for (int i=0; i < 100; i++) {
-        sis->atualiza_velocidade();
-        sis->atualiza_espaco();
-        x = sis->forca_resultante();
-        std::cout<<x<<std::endl;
+    for(int i=0; i<100; i++) {
+        std::cout<<i<<":"<<modelo->get_x_atual()<<std::endl;
+        controle_sistema->calcula_posicao();
     }
+
     return 0;
 }
