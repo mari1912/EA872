@@ -77,6 +77,23 @@ void Model::set_aceleracao(float aceleracao_novo){
     aceleracao = aceleracao_novo;
 }
 
+class View
+{
+  private:
+    std::shared_ptr<Model>model;
+  public:
+    View(std::shared_ptr<Model>model);
+    void render();
+};
+
+View::View(std::shared_ptr<Model>model){ 
+    this->model = model;
+}
+
+void View::render() {
+  std::cout << "Render: " << model->get_x_atual() << std::endl;
+}
+
 //Controller
 class Controller {
     private:
@@ -106,11 +123,11 @@ int main() {
 
     std::shared_ptr<Model>modelo(new Model(1, 0, 0.1, 1, 1, 0));
     std::shared_ptr<Controller>controle_sistema(new Controller(modelo));
-    
-    for(int i=0; i<100; i++) {
-        std::cout<<i<<":"<<modelo->get_x_atual()<<std::endl;
+    std::shared_ptr<View>view(new View(modelo));
+    for (int i=0; i<100; i++)
+    {
         controle_sistema->calcula_posicao();
-    }
-
+        view->render();
+    }   
     return 0;
 }
