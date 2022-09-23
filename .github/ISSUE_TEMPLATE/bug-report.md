@@ -1,4 +1,9 @@
-## Bug Report
+---
+name: "Bug report"
+about: "Report an Bug"
+title: ""
+labels: "Bug"
+---
 <!--
 BEFORE opening a issue, double check the following items:
 
